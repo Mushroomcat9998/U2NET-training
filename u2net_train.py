@@ -163,6 +163,9 @@ def main():
 
     print_frq = args.print_frq
 
+    val_loss = 0
+    tar_loss = 0
+
     for epoch in range(start_epoch, epoch_num):
         net.train()
 
@@ -198,25 +201,29 @@ def main():
             # del temporary outputs and loss
             del d0, d1, d2, d3, d4, d5, d6, loss2, loss
 
+            val_loss = running_loss / ite_num4val
+            tar_loss = running_tar_loss / ite_num4val
+
             if ite_num % print_frq == 0:
                 print("[INFO] Epoch: %3d/%3d, batch: %5d/%5d, ite: %d, train loss: %3f, tar: %3f " % (
                     epoch + 1, epoch_num, (i + 1) * batch_size_train, train_num, ite_num,
-                    running_loss / ite_num4val, running_tar_loss / ite_num4val))
+                    val_loss, running_tar_loss / ite_num4val))
 
+        print('[INFO] Val loss: ', val_loss)
         print('[INFO] Saving latest model ...')
         save_model(os.path.join(model_dir, model_name + "_latest.pth"),
                    epoch, net, optimizer,
-                   running_loss / ite_num4val, running_tar_loss / ite_num4val)
+                   val_loss, tar_loss)
         print('[INFO] Saved latest model')
 
-        if running_loss / ite_num4val < old_loss:
+        if val_loss < old_loss:
             print('[INFO] Saving best model ...')
             save_model(os.path.join(model_dir, model_name + "_best.pth"),
                        epoch, net, optimizer,
-                       running_loss / ite_num4val, running_tar_loss / ite_num4val)
+                       val_loss, tar_loss)
             print('[INFO] Saved best model')
 
-            old_loss = running_loss / ite_num4val
+            old_loss = val_loss
             running_loss = 0.0
             running_tar_loss = 0.0
             net.train()  # resume train
